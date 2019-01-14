@@ -1,0 +1,51 @@
+#!/usr/bin/expect -f
+
+# A simple utility that utlizes Tcl's "Expect" extension to interact with the telnet connection to your local tor control port (if you've enabled and defined one in your torrc file). It currently is set up to authenticate, execute a few built-in commands (setevents circ, getinfo circuit-status), and highlight BUILT, ONEHOP_TUNNEL and circuit CLOSED events. In other words, it provides some situational awareness in regard to which guards you're connected to, general circuit activity, and improves tor control output readability, imo.
+
+# Requires "highlight" in /usr/share, so run: "git clone https://github.com/goodell/highlight.git /usr/share/highlight" first or just uncomment the first "spawn" and "sleep" lines and the script will download it for you.
+
+# Some useful commands for reference:
+# - "getinfo circuit-status" (get currently built circuits)
+# - "setevents stream" (real-time stream current connections going through a circuit)
+# - "setevents circ stream" (stream circuit building events and real-time connections going through circuits)
+# - "extendcircuit 0" (extends a circuit)
+# - "closecircuit [num]" (close an already built circuit)
+
+# Note: the script currently authenticates to the control port with "", meaning there's no real authentication. Although the control socket is bound to 127.0.0.1, it's still recommended to either use the HashedControlPassword or CookieAuthentication for authenticating to your ControlPort.
+
+# This script is intended for research and educational purposes.
+# author: (@0rbz_)
+
+# Usage: ./torlight <control port>
+
+if { $argc != 1 } {
+        puts stderr "$argv0: Usage: $argv0 <control port>"
+        exit 1
+    }
+
+set control_port [lindex $argv 1]
+
+# Uncomment the following two lines to have the script download "highlight" for you
+
+#spawn git clone https://github.com/goodell/highlight.git /usr/share/highlight
+#sleep 7
+
+set ip "localhost $argv | /usr/share/highlight/highlight --filter RED,BUILT --filter YELLOW,ONEHOP_TUNNEL --filter GREEN,CLOSED --filter MAGENTA,EXTENDED --filter MAGENTA,NEW --filter MAGENTA,SOURCE_ADDR"
+
+# Feel free to customize the "send" events to send whatever (build custom circuits, etc.) to the control session.
+spawn "/bin/bash"
+send "telnet $ip\r"
+expect "'^]'."
+send "authenticate \"\""
+sleep 0.7
+send "\r"
+expect "250 OK"
+send "setevents circ"
+sleep 0.7
+send "\r"
+expect "250 OK"
+send "getinfo circuit-status"
+sleep 0.7
+send "\r"
+expect "250 OK"
+interact

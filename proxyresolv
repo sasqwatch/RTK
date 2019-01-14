@@ -1,0 +1,30 @@
+#!/bin/bash
+# This script is called by proxychains to resolve DNS names, and should be placed in /usr/lib/proxychains3/
+
+# This modification selects a random DNS server from the OpenNIC project per TCP connection.
+
+RAND=$(( $RANDOM % 13 ))
+DNS_SERVERS=(
+${PROXYRESOLV_DNS:-58.6.115.42}
+${PROXYRESOLV_DNS:-58.6.115.43}
+${PROXYRESOLV_DNS:-119.31.230.42}
+${PROXYRESOLV_DNS:-200.252.98.162}
+${PROXYRESOLV_DNS:-217.79.186.148}
+${PROXYRESOLV_DNS:-81.89.98.6}
+${PROXYRESOLV_DNS:-78.159.101.37}
+${PROXYRESOLV_DNS:-203.167.220.153}
+${PROXYRESOLV_DNS:-82.229.244.191} 
+${PROXYRESOLV_DNS:-216.87.84.211}
+${PROXYRESOLV_DNS:-66.244.95.20}
+${PROXYRESOLV_DNS:-207.192.69.155}
+${PROXYRESOLV_DNS:-72.14.189.120}
+)
+
+if [ $# = 0 ] ; then
+        echo "  usage:"
+        echo "          proxyresolv <hostname> "
+        exit
+fi
+
+export LD_PRELOAD=libproxychains.so.3
+dig $1 @${DNS_SERVERS[$RAND]} +tcp | awk '/A.+[0-9]+\.[0-9]+\.[0-9]/{print $5;}'
